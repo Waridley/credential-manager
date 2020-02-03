@@ -9,9 +9,7 @@ import com.github.philippheuer.credentialmanager.identityprovider.OAuth2Identity
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -34,7 +32,7 @@ public class CredentialManager {
     /**
      * Holds the registered identity providers
      */
-    private final List<IdentityProvider> identityProviders = new ArrayList<>();
+    private final Map<String, IdentityProvider> identityProviders = new HashMap<>();
 
     /**
      * In-Memory Credential Storage
@@ -63,14 +61,10 @@ public class CredentialManager {
      */
     public void registerIdentityProvider(IdentityProvider identityProvider) {
         log.debug("Trying to register IdentityProvider {} [Type: {}]", identityProvider.getProviderName(), identityProvider.getProviderType());
-        Boolean exists = this.identityProviders.stream().filter(idp -> idp.getProviderName().equalsIgnoreCase(identityProvider.getProviderName())).count() > 0 ? true : false;
-        if (exists) {
+        if(this.identityProviders.putIfAbsent(identityProvider.getProviderName().toLowerCase(), identityProvider) != null) {
             throw new RuntimeException("Identity Provider " + identityProvider.getProviderName() + " was already registered!");
         }
-
         identityProvider.setCredentialManager(this);
-        this.identityProviders.add(identityProvider);
-
         log.debug("Registered IdentityProvider {} [Type: {}]", identityProvider.getProviderName(), identityProvider.getProviderType());
         log.debug("A total of {} IdentityProviders have been registered!", this.identityProviders.size());
     }
@@ -82,7 +76,7 @@ public class CredentialManager {
      * @return IdentityProvider
      */
     public Optional<IdentityProvider> getIdentityProviderByName(String identityProviderName) {
-        return this.identityProviders.stream().filter(i -> i.getProviderName().equalsIgnoreCase(identityProviderName)).findFirst();
+        return Optional.ofNullable(this.identityProviders.get(identityProviderName.toLowerCase()));
     }
 
     /**
@@ -92,7 +86,7 @@ public class CredentialManager {
      * @return IdentityProvider
      */
     public Optional<OAuth2IdentityProvider> getOAuth2IdentityProviderByName(String identityProviderName) {
-        return this.identityProviders.stream().filter(i -> i.getProviderName().equalsIgnoreCase(identityProviderName)).map(i -> (OAuth2IdentityProvider) i).findFirst();
+        return Optional.ofNullable((OAuth2IdentityProvider) this.identityProviders.get(identityProviderName.toLowerCase()));
     }
 
     /**
@@ -104,18 +98,14 @@ public class CredentialManager {
     public void addCredential(String providerName, Credential credential) {
         // OAuth2
         if (credential instanceof OAuth2Credential) {
-            OAuth2Credential oAuth2Credential = (OAuth2Credential) credential;
-            List<IdentityProvider> oauth2IdentityProviders = this.identityProviders.stream().filter(idp -> idp.getProviderType().equalsIgnoreCase("oauth2") && idp.getProviderName().equalsIgnoreCase(providerName) && idp instanceof OAuth2IdentityProvider).collect(Collectors.toList());
-
-            if (oauth2IdentityProviders.size() == 1) {
-                OAuth2IdentityProvider oAuth2IdentityProvider = (OAuth2IdentityProvider) oauth2IdentityProviders.get(0);
-
-                Optional<OAuth2Credential> enrichedCredential = oAuth2IdentityProvider.getAdditionalCredentialInformation(oAuth2Credential);
+            IdentityProvider idp = getIdentityProviderByName(providerName).orElseThrow(() -> new RuntimeException("No provider found named " + providerName));
+            if(idp instanceof OAuth2IdentityProvider) {
+                Optional<OAuth2Credential> enrichedCredential = ((OAuth2IdentityProvider) idp).getAdditionalCredentialInformation((OAuth2Credential) credential);
                 if (enrichedCredential.isPresent()) {
                     credential = enrichedCredential.get();
                 }
             } else {
-                throw new RuntimeException("Can't find a unique identity provider for the specified credential!");
+                throw new RuntimeException("Credential is an OAuth2Credential, but provider named \"" + providerName + "\" is not an OAuth2IdentityProvider");
             }
         }
 
@@ -134,7 +124,7 @@ public class CredentialManager {
                 OAuth2Credential credential = (OAuth2Credential) entry;
 
                 if (credential.getUserId().equalsIgnoreCase(userId)) {
-                    return Optional.ofNullable(credential);
+                    return Optional.of(credential);
                 }
             }
         }

@@ -105,7 +105,7 @@ public abstract class OAuth2IdentityProvider extends IdentityProvider {
         if (state == null) {
             state = this.providerName + "|" + UUID.randomUUID();
         }
-        return String.format("%s?response_type=%s&client_id=%s&redirect_uri=%s&scope=%s&state=%s", authUrl, URLEncoder.encode(responseType, "UTF-8"), URLEncoder.encode(clientId, "UTF-8"), URLEncoder.encode(redirectUrl, "UTF-8"), String.join(scopeSeperator, scopes.stream().map(s -> s.toString()).collect(Collectors.toList())), URLEncoder.encode(state, "UTF-8"));
+        return String.format("%s?response_type=%s&client_id=%s&redirect_uri=%s&scope=%s&state=%s", authUrl, URLEncoder.encode(responseType, "UTF-8"), URLEncoder.encode(clientId, "UTF-8"), URLEncoder.encode(redirectUrl, "UTF-8"), scopes.stream().map(s -> s.toString()).collect(Collectors.joining(scopeSeperator)), URLEncoder.encode(state, "UTF-8"));
     }
 
     /**
@@ -316,9 +316,8 @@ public abstract class OAuth2IdentityProvider extends IdentityProvider {
      * Refresh access token using refresh token
      *
      * @param oldCredential The credential to refresh
-     * @return The refreshed credential
+     * @return The refreshed credential if the request was successful, `Optional.empty()` otherwise
      * @throws UnsupportedOperationException If the token endpoint type is not "QUERY" or "BODY", or if the credential has no refresh token.
-     * @throws RuntimeException If the response is unsuccessful
      */
     public Optional<OAuth2Credential> refreshCredential(OAuth2Credential oldCredential) {
         // request access token
@@ -370,10 +369,10 @@ public abstract class OAuth2IdentityProvider extends IdentityProvider {
             }
             
         } catch (Exception ex) {
-        
+            ex.printStackTrace();
+            return Optional.empty();
         }
         
-        return Optional.empty();
     }
     
     
