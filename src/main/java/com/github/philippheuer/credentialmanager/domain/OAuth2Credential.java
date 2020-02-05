@@ -9,7 +9,7 @@ import java.util.Map;
 /**
  * OAuth Credential
  */
-@Getter
+@Data
 @ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = true)
 public class OAuth2Credential extends Credential {

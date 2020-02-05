@@ -8,12 +8,12 @@ public abstract class Credential {
     /**
      * The identity provider key
      */
-    private final String identityProvider;
+    private String identityProvider;
 
     /**
      * Unique User Id
      */
-    private final String userId;
+    private String userId;
 
     /**
      * Credential
