@@ -34,8 +34,10 @@ dependencies {
     testImplementation group: 'org.junit.jupiter', name: 'junit-jupiter-api', version: '5.3.1'
 
     // Getter & Setter
-    compileOnly group: 'org.projectlombok', name: 'lombok', version: '1.18.10'
-    testCompile group: 'org.projectlombok', name: 'lombok', version: '1.18.10'
+    implementation group: 'org.projectlombok', name: 'lombok', version: '1.18.10'
+    testImplementation group: 'org.projectlombok', name: 'lombok', version: '1.18.10'
+    annotationProcessor group: 'org.projectlombok', name: 'lombok', version: '1.18.10'
+    testAnnotationProcessor group: 'org.projectlombok', name: 'lombok', version: '1.18.10'
 }
 
 /**
