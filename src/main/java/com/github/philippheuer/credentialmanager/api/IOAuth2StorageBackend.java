@@ -1,5 +1,6 @@
 package com.github.philippheuer.credentialmanager.api;
 
+import com.github.philippheuer.credentialmanager.domain.Credential;
 import com.github.philippheuer.credentialmanager.domain.OAuth2Credential;
 
 import java.util.ArrayList;
@@ -63,6 +64,11 @@ public interface IOAuth2StorageBackend extends IStorageBackend {
 	                                       String userName,
 	                                       List<String> scopes) {
 		return filter(identityProvider, userId, null, null, userName, scopes);
+	}
+
+	@Override
+	default List<Credential> filter(String identityProvider, String userId) {
+		return new ArrayList<>(filter(identityProvider, userId, null, null, null, null));
 	}
 	
 }
